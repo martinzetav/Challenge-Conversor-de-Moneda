@@ -1,6 +1,7 @@
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import exception.InvalidInputException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -21,7 +22,11 @@ public class Main {
         int option = 10;
 
         while(option != 7){
-            option = getMenu();
+            try {
+                option = getMenu();
+            } catch (InvalidInputException e) {
+                System.out.println(e.getMessage());
+            }
             switch (option){
                 case 1:
                     rate = getRate(CURRENCY_CODE_USD, CURRENCY_CODE_ARG);
@@ -97,7 +102,7 @@ public class Main {
 
     }
 
-    public static int getMenu(){
+    public static int getMenu() throws InvalidInputException {
         Scanner console = new Scanner(System.in);
         System.out.println("""
                 ***********************************************
@@ -113,6 +118,10 @@ public class Main {
                 Elija una opcíon válida:
                 ***********************************************                
                 """);
+
+        if(!console.hasNextInt()){
+            throw new InvalidInputException("Entrada invalida: Debe ingresar un valor numerico.");
+        }
 
         return console.nextInt();
     }
