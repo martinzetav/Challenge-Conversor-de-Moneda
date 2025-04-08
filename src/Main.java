@@ -8,9 +8,14 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
+
     public static void main(String[] args) throws IOException, InterruptedException {
 
         final String CURRENCY_CODE_ARG = "ARS";
@@ -20,8 +25,9 @@ public class Main {
 
         double rate = 0.0;
         int option = 10;
+        List<String> history = new ArrayList<>();
 
-        while(option != 7){
+        while(option != 8){
             try {
                 option = getMenu();
             } catch (InvalidInputException e) {
@@ -30,36 +36,41 @@ public class Main {
             switch (option){
                 case 1:
                     rate = getRate(CURRENCY_CODE_USD, CURRENCY_CODE_ARG);
-                    getValue(rate, CURRENCY_CODE_USD, CURRENCY_CODE_ARG);
+                    history.add(getValue(rate, CURRENCY_CODE_USD, CURRENCY_CODE_ARG));
                     break;
 
                 case 2:
                     rate = getRate(CURRENCY_CODE_ARG, CURRENCY_CODE_USD);
-                    getValue(rate, CURRENCY_CODE_ARG, CURRENCY_CODE_USD);
+                    history.add(getValue(rate, CURRENCY_CODE_ARG, CURRENCY_CODE_USD));
                     break;
 
                 case 3:
                     rate = getRate(CURRENCY_CODE_USD, CURRENCY_CODE_BRA);
-                    getValue(rate, CURRENCY_CODE_USD, CURRENCY_CODE_BRA);
+                    history.add(getValue(rate, CURRENCY_CODE_USD, CURRENCY_CODE_BRA));
                     break;
 
                 case 4:
                     rate = getRate(CURRENCY_CODE_BRA, CURRENCY_CODE_USD);
-                    getValue(rate, CURRENCY_CODE_BRA, CURRENCY_CODE_USD);
+                    history.add(getValue(rate, CURRENCY_CODE_BRA, CURRENCY_CODE_USD));
                     break;
 
                 case 5:
                     rate = getRate(CURRENCY_CODE_USD, CURRENCY_CODE_COL);
-                    getValue(rate, CURRENCY_CODE_USD, CURRENCY_CODE_COL);
+                    history.add(getValue(rate, CURRENCY_CODE_USD, CURRENCY_CODE_COL));
                     break;
 
                 case 6:
                     rate = getRate(CURRENCY_CODE_COL, CURRENCY_CODE_USD);
-                    getValue(rate, CURRENCY_CODE_COL, CURRENCY_CODE_USD);
+                    history.add(getValue(rate, CURRENCY_CODE_COL, CURRENCY_CODE_USD));
+                    break;
+
+                case 7:
+                    System.out.println("History:");
+                    history.forEach(System.out::println);
                     break;
 
                 default:
-                    if(option != 7) System.out.println("Opción no válida");
+                    if(option != 8) System.out.println("Opción no válida");
             }
         }
 
@@ -67,13 +78,19 @@ public class Main {
 
     }
 
-    public static void getValue(double rate, String currencyCode, String code){
+    public static String getValue(double rate, String currencyCode, String toCurrencyCode){
         Scanner console = new Scanner(System.in);
         System.out.println("Ingrese el valor que desea convertir:");
         double value = console.nextDouble();
         double convertedValue = value * rate;
         String convertedValueStr = String.format("%.2f", convertedValue);
-        System.out.println("El valor " + value + " [" + currencyCode + "] corresponde al valor final de =>> " + convertedValueStr + " [" + code + "]");
+
+        LocalDateTime now = LocalDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String formattedDate = now.format(formatter);
+
+        System.out.println("El valor " + value + " [" + currencyCode + "] corresponde al valor final de =>> " + convertedValueStr + " [" + toCurrencyCode + "]");
+        return "[" + formattedDate + "] " + value + " [" + currencyCode + "] => " + convertedValueStr + " [" + toCurrencyCode + "]";
     }
 
     public static double getRate(String endpoint, String currencyCode) {
@@ -87,8 +104,7 @@ public class Main {
             response = client
                     .send(request, HttpResponse.BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
-            System.out.println("Error al obtener la tasa de conversion.");
-            e.getMessage();
+            System.out.println("Error al obtener la tasa de conversion. " + e.getMessage());
         }
 
         JsonElement element = JsonParser.parseString(response.body());
@@ -96,9 +112,7 @@ public class Main {
 
         JsonObject conversionRates = jsonObject.get("conversion_rates").getAsJsonObject();
 
-        double rate = conversionRates.get(currencyCode).getAsDouble();
-
-        return rate;
+        return conversionRates.get(currencyCode).getAsDouble();
 
     }
 
@@ -114,7 +128,8 @@ public class Main {
                 4) Real Brasileño =>> Dólar
                 5) Dólar =>> Peso colombiano
                 6) Peso colombiano =>> Dólar
-                7) Salir
+                7) Ver historial de conversiones
+                8) Salir
                 Elija una opcíon válida:
                 ***********************************************                
                 """);
